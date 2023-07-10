@@ -32,11 +32,13 @@ p_tol = 0.0001 # tolerance for parameter switching
         
 class Lorenz:
     def __init__(self, sigma, rho, beta):
+        
         self.S = sigma
         self.R = rho
         self.B = beta
 
     def __str__(self):
+        
         output_string = "Sigma: " + str(self.S) + " Rho: " + str(self.R) + " Beta: " + str(self.B)
         return output_string
 
@@ -205,3 +207,24 @@ class Lorenz:
         plt.yscale("log")
         plt.legend()
         plt.title(r'$\tilde{\sigma} = 0.8\sigma, \tilde{\rho} = \rho, \tilde{\beta} = \beta$')
+        
+    
+    def plot_Lorenz_3d(self, x0, y0, z0):
+        
+        # call ic_list function
+        self.get_ic_list(x0, y0, z0)
+        
+        fig = plt.figure(figsize = (5, 5))
+        ax = fig.add_subplot(111, projection = "3d")
+        
+        ax.plot(self.x_list, self.y_list, self.z_list)
+        
+        ax.set_xlabel("X")
+        ax.set_ylabel("Y")
+        ax.set_zlabel("Z")
+        
+        ax.set_title("Lorenz Position")
+        
+        plt.show()
+        
+        

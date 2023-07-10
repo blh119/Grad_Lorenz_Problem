@@ -38,3 +38,5 @@ lorenz_2.solve_lorenz(s0, 60, 59.9, 10, .8)
 lorenz_1.plot_absolute_errors()
 lorenz_1.plot_absolute_errors_figure_1()
 lorenz_2.plot_absolute_errors_figure_5()
+
+lorenz_1.plot_Lorenz_3d(60, 59.9, 10)
