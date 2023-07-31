@@ -26,10 +26,13 @@ dt = 0.0001 # forward Euler timestep
 dt_obs = 0.1 # how often to observe solution
 dt_par = 0.1 # how often to update param
 p_tol = 0.0001 # tolerance for parameter switching
-        
+       
+# Lorenz(SIGMA, RHO, BETA) 
 lorenz_1 = Lorenz(SIGMA, RHO, BETA)
 lorenz_1.get_ic_list(60, 59.9, 10)
-lorenz_1.solve_lorenz(s0, 60, 59.9, 10, 1.)
+
+# lorenz_1.(initial_estimate, SIG)
+lorenz_1.solve_lorenz(s0, 60, 59.9, 10, 1.) # would the parameters of the inital SIGMA, RHO and BETA be different that what is in the solve lorenz equation
 
 lorenz_2 = Lorenz(SIGMA, RHO, BETA)
 lorenz_2.get_ic_list(60, 59.9, 10)
