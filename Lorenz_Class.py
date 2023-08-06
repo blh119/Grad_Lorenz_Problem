@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+ # -*- coding: utf-8 -*-
 """
 Created on Sun Jul 16 19:32:51 2023
 
@@ -73,45 +73,39 @@ class Lorenz:
         N = t.size
         sol = np.empty((N, 3))
         ndg = np.empty((N, 3))
-        g = np.empty((N, 3))
-        g_act = np.empty((N, 3))
+        g = np.empty(N)
         
         self.get_ic(60, 59.9, 10) # get initial conditions for the lorenz system
         
         sol[0] = [self.last_x, self.last_y, self.last_z]
-        g[0] = [0., 0., 0.] # initialize parameter estimate
-        ndg[0] = np.array([self.sigma*(self.last_y - self.last_x), self.rho*self.last_x - self.last_y, -self.beta*self.last_y]) + g[0] - np.array([mu1*((self.sigma*(self.last_y - self.last_x)) - sol[0][0]), mu2*((self.rho*self.last_x - self.last_y) - sol[0][1]), 0])
+        g[0] = 0. # initialize parameter estimate
+        ndg[0] = np.array([self.last_x, self.rho*self.last_x - self.last_y, self.last_z]) + g[0] - np.array([mu1*((self.sigma*(self.last_y - self.last_x)) - sol[0][0]), mu2*((self.rho*self.last_x - self.last_y) - sol[0][1]), 0])
         
         for i in range(1, N):
             
             u = sol[i-1]
             v = ndg[i-1]
             g_ = g[i-1]
-            g_act_ = g_act[i-1]
             
             
             if i % dt_obs_int == 0: # observe data
-                #v = [self.sigma*(v[1] - v[0]), self.rho*v[0] - v[1], -self.beta*v[1]] + g_ + np.array([mu1*(v[0] - u[0]), mu2*(v[1] - u[1]), 0])
                 # new position vector
-                new_pos = np.array([u[0], u[1], 0]) + np.array([0, 0, -self.beta*v[2] + u[0]*u[1]])
-                g_ = new_pos - np.array([self.sigma*(v[1] - v[0]), self.rho*v[0] - v[1], -self.beta*v[2]])# new g
+                g_ = self.sigma*(v[1] - v[0]) - self.rho*u[0] + v[1] # is this right
 
             # known solution 
             u_ = np.array([self.sigma*(u[1] - u[0]), self.rho*u[0] - u[1] - u[0]*u[2], -self.beta*u[2] + u[0]*u[1]])
             
-            f_ = np.array([self.sigma*(v[1] - v[0]), self.rho*v[0] - v[1], -self.beta*v[2]])
-            v_ = f_ + g_ - np.array([mu1*(v[0] - u[0]), mu2*(v[1] - u[1]), 0])
-            
-            g_act_ = np.array([self.sigma*(u[1] - u[0]), -u[0]*u[2], u[0]*u[1]])
+            # unknown solution
+            f_ = np.array([self.sigma*(v[1] - v[0]), self.rho*v[0] - v[1], -self.beta*v[2] + v[0]*v[1]])
+            v_ = f_ + np.array([-mu1*(v[0] - u[0]), g_, - mu2*(v[1] - u[1])])
             
             g[i] = g_ + (dt*g_)
-            g_act[i] = g_act_ + (dt*g_act_)
             sol[i] = u + (dt*u_)
             ndg[i] = v + (dt*v_)
             
             
             
-        self.t, self.g, self.g_act, self.sol, self.ndg = t, g, g_act, sol, ndg
+        self.t, self.g, self.sol, self.ndg = t, g, sol, ndg
         
         
         self.idx = np.arange(0, self.t.size, 1000) # plot every 1000 timesteps
