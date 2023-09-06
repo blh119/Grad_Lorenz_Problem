@@ -83,27 +83,36 @@ class Lorenz:
                            -self.init_y + self.rho*self.init_x,
                            -self.beta*self.init_z + self.init_x*self.init_y])
         
-        for i in range(1, N):
+        counter = 0
+        
+        for j in range(1, J):
             
-            u = sol[i-1]
-            v = ndg[i-1]
-            g_ = g[i-1]
+            if j == 1:
+                counter = counter
+            else:
+                counter = counter + 
+                
+            for i in range(1, N):
+            
+                u = sol[i-1]
+                v = ndg[i-1]
+                g_ = g[i-1]
             
             
-            if i % dt_obs_int == 0: # observe data
-                # new position vector
-                g_ = -v[0]*v[2]# is this right
+                if i % dt_obs_int == 0: # observe data
+                    # new position vector
+                    g_ = -v[0]*v[2]# is this right
 
-            # known solution 
-            u_ = np.array([self.sigma*(-u[0] + u[1]), -u[1] + self.rho*u[0] - u[0]*u[2], -self.beta*u[2] + u[0]*u[1]])
+                # known solution 
+                u_ = np.array([self.sigma*(-u[0] + u[1]), -u[1] + self.rho*u[0] - u[0]*u[2], -self.beta*u[2] + u[0]*u[1]])
             
-            # unknown solution
-            f_ = np.array([self.sigma*(-v[0] + v[1]), -v[1] + self.rho*v[0], -self.beta*v[2] + v[0]*v[1]])
-            v_ = f_ + np.array([-mu1*(v[0] - u[0]), g_, 0])
-            
-            g[i] = g[i-1] + (dt*g_)
-            sol[i] = u + (dt*u_)
-            ndg[i] = v + (dt*v_)
+                # unknown solution
+                f_ = np.array([self.sigma*(-v[0] + v[1]), -v[1] + self.rho*v[0], -self.beta*v[2] + v[0]*v[1]])
+                v_ = f_ + np.array([-mu1*(v[0] - u[0]), g_, 0])
+                
+                g[i] = g[i-1] + (dt*g_)
+                sol[i] = u + (dt*u_)
+                ndg[i] = v + (dt*v_)
             
         self.t, self.g, self.sol, self.ndg = t, g, sol, ndg
         
