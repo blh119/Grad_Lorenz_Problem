@@ -11,6 +11,26 @@ import matplotlib.pyplot as plt
 dt_obs = 0.1 # how often to observe solution
 dt_par = 0.1 # how often to update param
 
+# make linear space function
+
+def linear_space(start, end, steps):
+    
+    step_length = (end - start) / steps
+
+    even_spaced_nums = [start]
+    
+    # keeps track if we have reached 
+    tracker = start
+    
+    # add values to the even_spaced_nums list
+    while tracker < end:
+        tracker = tracker + step_length
+        even_spaced_nums.append(tracker)
+        
+    return np.array(even_spaced_nums) # return whole list as numpy array
+        
+
+
 class Lorenz:
     
     def __init__(self, SIGMA, RHO, BETA):
@@ -63,65 +83,115 @@ class Lorenz:
 
         self.x_list, self.y_list, self.z_list = x_list, y_list, z_list
         
-    def solve_lorenz_split_1(self, t0, tf, dt, mu1):
+    def solve_lorenz_split_1(self, t0, tf, steps, mu1):
         
-        t = np.arange(t0, tf, dt)
-        dt_obs_int = int(dt_obs / dt)
         #dt_par_int = int(dt_par / dt)
         
+        sol_full_set = []
+        ndg_full_set = []
+        g_full_set = []
         
-        N = t.size
-        sol = np.empty((N, 3))
-        ndg = np.empty((N, 3))
-        g = np.empty(N)
-        
-        sol[0] = [self.sigma*(-self.init_x + self.init_y), 
-                  -self.init_y + self.rho*self.init_x - self.init_x*self.init_z,
-                  -self.beta*self.init_z + self.init_x*self.init_y]
-        g[0] = 0. # initialize parameter estimate
-        ndg[0] = np.array([self.sigma*(-self.init_x + self.init_y), 
-                           -self.init_y + self.rho*self.init_x,
-                           -self.beta*self.init_z + self.init_x*self.init_y])
+        time_steps = abs(linear_space(t0, tf, steps) - tf) # This function gives us our our time steps to solve the problem
         
         counter = 0
         
-        for j in range(1, J):
+        for time_step in time_steps:
             
-            if j == 1:
-                counter = counter
-            else:
-                counter = counter + 
+            dt = 1/time_step
+            
+            print("dt: ", dt)
                 
-            for i in range(1, N):
-            
-                u = sol[i-1]
-                v = ndg[i-1]
-                g_ = g[i-1]
-            
-            
-                if i % dt_obs_int == 0: # observe data
-                    # new position vector
-                    g_ = -v[0]*v[2]# is this right
-
-                # known solution 
-                u_ = np.array([self.sigma*(-u[0] + u[1]), -u[1] + self.rho*u[0] - u[0]*u[2], -self.beta*u[2] + u[0]*u[1]])
-            
-                # unknown solution
-                f_ = np.array([self.sigma*(-v[0] + v[1]), -v[1] + self.rho*v[0], -self.beta*v[2] + v[0]*v[1]])
-                v_ = f_ + np.array([-mu1*(v[0] - u[0]), g_, 0])
+            for i in range(5): 
                 
-                g[i] = g[i-1] + (dt*g_)
-                sol[i] = u + (dt*u_)
-                ndg[i] = v + (dt*v_)
-            
-        self.t, self.g, self.sol, self.ndg = t, g, sol, ndg
+                print("Total Time: ", abs(time_step - tf), "\t", "Time Step: ", i + 1)
+                
+                sol = np.empty((int(time_step), 3))   
+                ndg = np.empty((int(time_step), 3))   
+                
+                if time_step == tf:
+                    
+                    sol[0] = np.array([self.sigma*(-self.init_x + self.init_y), 
+                                       -self.init_y + self.rho*self.init_x - self.init_x*self.init_z,
+                                       -self.beta*self.init_z + self.init_x*self.init_y])
+                    
+                    ndg[0] = np.array([self.sigma*(-self.init_x + self.init_y), 
+                                       -self.init_y + self.rho*self.init_x,
+                                       -self.beta*self.init_z + self.init_x*self.init_y])
+                    
+                    g_ = 0
+                    
+                    u = sol[i]
+                    v = ndg[i]
+                    
+                    print("U: ", u)
+                    print("V: ", v)
+                
+                    # known solution 
+                    u_ = np.array([self.sigma*(-u[0] + u[1]), -u[1] + self.rho*u[0] - u[0]*u[2], -self.beta*u[2] + u[0]*u[1]])
+                
+                    # unknown solution
+                    f_ = np.array([self.sigma*(-v[0] + v[1]), -v[1] + self.rho*v[0], -self.beta*v[2] + v[0]*v[1]])
+                    v_ = f_ + np.array([-mu1*(v[0] - u[0]), g_, 0])
+                    
+                    sol[i+1] = u + (dt*u_)
+                    ndg[i+1] = v + (dt*v_)
+                    
+                    print(sol[i+1])
+                    print(ndg[i+1])
+                
+                else:
+                    
+                    print(sol_full_set)
+                    print(ndg_full_set)
+                    
+                    print(len(sol_full_set))
+                    print(len(ndg_full_set))
+                    
+                    sol[0] = np.array([sol_full_set[counter][len(sol_full_set[counter]) - 1][0], 
+                                       sol_full_set[counter][len(sol_full_set[counter]) - 1][1], 
+                                       sol_full_set[counter][len(sol_full_set[counter]) - 1][2]])                    
+                    
+                    ndg[0] = np.array([ndg_full_set[counter][len(ndg_full_set[counter]) - 1][0],
+                                       ndg_full_set[counter][len(ndg_full_set[counter]) - 1][1],
+                                       ndg_full_set[counter][len(ndg_full_set[counter]) - 1][2]])
+                    
+                    g_ = -ndg[0,0]*ndg[0,2] # 
+                    
+                    counter = counter + 1
+                    
+                    u = sol[i]
+                    v = ndg[i]
+                    
+                    print("U: ", u)
+                    print("V: ", v)
+                
+                    # known solution 
+                    u_ = np.array([self.sigma*(-u[0] + u[1]), -u[1] + self.rho*u[0] - u[0]*u[2], -self.beta*u[2] + u[0]*u[1]])
+                
+                    # unknown solution
+                    f_ = np.array([self.sigma*(-v[0] + v[1]), -v[1] + self.rho*v[0], -self.beta*v[2] + v[0]*v[1]])
+                    v_ = f_ + np.array([-mu1*(v[0] - u[0]), g_, 0])
+                    
+                    sol[i+1] = u + (dt*u_)
+                    ndg[i+1] = v + (dt*v_)
+                    
+                    print("Sol: ", sol[i+1])
+                    print("Ndg: ", ndg[i+1])
+  
+                if i == 4:
+                    
+                    sol_full_set.append(sol) 
+                    ndg_full_set.append(ndg) 
+                    g_full_set.append(g_)
+                                 
+        self.g, self.sol, self.ndg = g_full_set, sol_full_set, ndg_full_set
         
         
-        self.idx = np.arange(0, self.t.size, 1000) # plot every 1000 timesteps
+        # self.idx = np.arange(0, self.t.size, 1000) # plot every 1000 timesteps
         # these equations represent delta t
-        self.abs_u = abs(self.ndg[self.idx,0]-self.sol[self.idx,0])
-        self.abs_v = abs(self.ndg[self.idx,1]-self.sol[self.idx,1])
-        self.abs_w = abs(self.ndg[self.idx,2]-self.sol[self.idx,2])
+        self.abs_u = abs(self.ndg[0]-self.sol[0])
+        self.abs_v = abs(self.ndg[1]-self.sol[1])
+        self.abs_w = abs(self.ndg[2]-self.sol[2])
         
         
     def plot_absolute_errors(self):
@@ -137,7 +207,7 @@ class Lorenz:
         
 lorenz_1 = Lorenz(10., 28., 8/3)
 lorenz_1.get_ic(60., 59.9, 10.)
-lorenz_1.solve_lorenz_split_1(0., 100., 0.0001, 100.)
+test = lorenz_1.solve_lorenz_split_1(0, 100000, 100, 100.)
 lorenz_1.plot_absolute_errors()
 
 print(lorenz_1.init_x)
