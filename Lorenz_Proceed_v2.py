@@ -165,19 +165,19 @@ def nudged_system(tf, step):
             sol_g_full_set.append(current_sol_g)
             ndg_g_full_set.append(current_ndg_g)
             
-            #sol_init_points = current_sol[init_values_index]           
+            sol_init_points = current_sol[init_values_index]           
             
             counter = counter + 1
             
         else:
             
-            #init_x = sol_init_points[counter-1, 0]
-            #init_y = sol_init_points[counter-1, 1]
-            #init_z = sol_init_points[counter-1, 2]
+            init_x = sol_init_points[counter-1, 0]
+            init_y = sol_init_points[counter-1, 1]
+            init_z = sol_init_points[counter-1, 2]
             
-            init_x = sol_full_set[counter-1][step][0]
-            init_y = sol_full_set[counter-1][step][1]
-            init_z = sol_full_set[counter-1][step][2]
+            #init_x = sol_full_set[counter-1][step][0]
+            #init_y = sol_full_set[counter-1][step][1]
+            #init_z = sol_full_set[counter-1][step][2]
             
             init_ndg_y = ndg_full_set[counter-1][step][1]
             ndg_list = ndg_full_set[counter-1][step:]
