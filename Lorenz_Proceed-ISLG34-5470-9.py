@@ -13,11 +13,11 @@ sigma = 10.
 beta = 8/3
 rho = 28.
 
-#mu0 = 500.
-#mu2 = 500.
+mu0 = 500.
+mu2 = 500. 
 
 mu_list = [100., 500., 1000., 2000., 3000.]
-dt_list = [.1, .001, .0001, .00001, .000001]
+dt = [.1, .001, .0001, .00001, .000001]
 tf_list = [1000, 2000, 3000, 4000, 5000]
 step_list = [1, 10, 100]
 
@@ -62,11 +62,10 @@ def get_ic_list(x0, y0, z0):
     return x_list, y_list, z_list
 
 
-def solve_lorenz_split_1_first(time_step, init_x, init_y, init_z, mu, dt):
+def solve_lorenz_split_1_first(time_step, init_x, init_y, init_z):
     
-    mu0 = mu
-    mu2 = mu
-     
+    dt = 0.0001
+    
     sol = np.empty((time_step, 3))   
     ndg = np.empty((time_step, 3))
     sol_g = np.empty(time_step)
@@ -106,10 +105,9 @@ def solve_lorenz_split_1_first(time_step, init_x, init_y, init_z, mu, dt):
     return [np.array(sol), np.array(ndg), np.array(sol_g), np.array(ndg_g)]
 
 
-def solve_lorenz_split_1(time_step, init_x, init_y, init_z, init_ndg_y, init_sol_g, ndg_list, mu, dt):
+def solve_lorenz_split_1(time_step, init_x, init_y, init_z, init_ndg_y, init_sol_g, ndg_list):
     
-    mu0 = mu
-    mu2 = mu
+    dt = 0.0001
     
     sol = np.empty((time_step, 3))   
     ndg = np.empty((time_step, 3))
@@ -144,7 +142,7 @@ def solve_lorenz_split_1(time_step, init_x, init_y, init_z, init_ndg_y, init_sol
         
     return [np.array(sol), np.array(ndg), np.array(sol_g), np.array(ndg_g)]
         
-def nudged_system(tf, step, mu, dt):
+def nudged_system(tf, step):
     
     time_steps = np.arange(0, tf + 1, step)[::-1]
     time_steps = time_steps[time_steps != 0]
@@ -166,7 +164,7 @@ def nudged_system(tf, step, mu, dt):
             
             init_x, init_y, init_z = get_ic(60., 59.9, 10.)
             
-            current_sol, current_ndg, current_sol_g, current_ndg_g = solve_lorenz_split_1_first(time_step, init_x, init_y, init_z, mu, dt)
+            current_sol, current_ndg, current_sol_g, current_ndg_g = solve_lorenz_split_1_first(time_step, init_x, init_y, init_z)
             
             sol_full_set.append(current_sol)
             ndg_full_set.append(current_ndg)
@@ -191,7 +189,7 @@ def nudged_system(tf, step, mu, dt):
             init_sol_g = -sol_full_set[counter-1][step-1, 0]*sol_full_set[counter-1][step-1, 2]
             ndg_list = ndg_full_set[counter-1][step-1:]
             
-            current_sol, current_ndg, current_sol_g, current_ndg_g = solve_lorenz_split_1(time_step, init_x, init_y, init_z, init_ndg_y, init_sol_g, ndg_list, mu, dt)
+            current_sol, current_ndg, current_sol_g, current_ndg_g = solve_lorenz_split_1(time_step, init_x, init_y, init_z, init_ndg_y, init_sol_g, ndg_list)
             
             sol_full_set.append(current_sol)
             ndg_full_set.append(current_ndg)
@@ -202,7 +200,7 @@ def nudged_system(tf, step, mu, dt):
             
     return sol_full_set, ndg_full_set, sol_g_full_set, ndg_g_full_set
 
-def get_endpoints(sol, ndg, sol_g, ndg_g, step):
+def get_endpoints(sol, ndg, sol_g, ndg_g):
     
     sol_endpoints = []
     ndg_endpoints = []
@@ -210,16 +208,16 @@ def get_endpoints(sol, ndg, sol_g, ndg_g, step):
     ndg_g_endpoints = []
     
     for i in range(len(sol)):
-        sol_endpoints.append(sol[i][step-1])
+        sol_endpoints.append(sol[i][9])
         
     for i in range(len(ndg)):
-        ndg_endpoints.append(ndg[i][step-1])
+        ndg_endpoints.append(ndg[i][9])
         
     for i in range(len(sol_g)):
-        sol_g_endpoints.append(sol_g[i][step-1])
+        sol_g_endpoints.append(sol_g[i][9])
         
     for i in range(len(ndg_g)):
-        ndg_g_endpoints.append(ndg_g[i][step-1])
+        ndg_g_endpoints.append(ndg_g[i][9])
         
     return np.array(sol_endpoints), np.array(ndg_endpoints), np.array(sol_g_endpoints), np.array(ndg_g_endpoints)
 
@@ -404,56 +402,28 @@ def plot_absolute_errors_last_three(sol_full_set, ndg_full_set, sol_g_full_set, 
     plt.tight_layout()
     plt.show()
     
-def create_testing_parameters_dataframe(sol, ndg, sol_g, ndg_g, mu, dt, tf, step):
+def create_testing_parameters_dataframe(sol_endpoints, ndg_endpoints, sol_g_endpoints, ndg_g_endpoints):   
     
-    current_run_data = {"sol_x": sol[:,0],
-                        "sol_y": sol[:,1],
-                        "sol_z": sol[:,2],
-                        "ndg_x": ndg[:,0],
-                        "ndg_y": ndg[:,1],
-                        "ndg_z": ndg[:,2],
-                        "sol_g": sol_g,
-                        "ndg_g": ndg_g,
-                        "diff_g": abs(sol_g-ndg_g),
-                        "u": abs(sol[:,0]-ndg[:,0]),
-                        "w": abs(sol[:,1]-ndg[:,1]),
-                        "z": abs(sol[:,2]-ndg[:,2])}
+    param_data = {"sol_x": sol_endpoints[:,0],
+                 "sol_y": sol_endpoints[:,1],
+                 "sol_z": sol_endpoints[:,2],
+                 "ndg_x": ndg_endpoints[:,0],
+                 "ndg_y": ndg_endpoints[:,1],
+                 "ndg_z": ndg_endpoints[:,2]}
+
+    param_df = pd.DataFrame(param_data)
+
+def testing_parameters(nudging_function, mu_list, dt_list, mu_list, dt_list, tf_list, step_list):
     
-    current_run_dataframe = pd.DataFrame(current_run_data)
     
-    current_run_dataframe["mu"] = mu
-    current_run_dataframe["dt"] = dt
-    current_run_dataframe["tf"] = tf
-    current_run_dataframe["step"] = step
+    current_sol, current_ndg, current_sol_g, current_ndg_g = nudging_function(tf, step)
     
-    return current_run_dataframe
     
-def testing_parameters(nudging_function, mu_list, dt_list, tf_list, step_list):
     
-    nudging_df = pd.DataFrame()
-    
-    for tf in tf_list:
-        for mu in mu_list:
-            for step in step_list:
-                for dt in dt_list: 
-                    
-                    current_sol, current_ndg, current_sol_g, current_ndg_g = nudging_function(tf, step, mu, dt) 
-                    sol_endpoints, ndg_endpoints, sol_g_endpoints, ndg_g_endpoints = get_endpoints(current_sol, current_ndg, current_sol_g, current_ndg_g, step)
-                    current_nudging_df = create_testing_parameters_dataframe(sol_endpoints, ndg_endpoints, sol_g_endpoints, ndg_g_endpoints, mu, dt, tf, step)
-                    nudging_df = pd.concat([current_nudging_df, nudging_df], axis = 0)
-                    
-    return nudging_df
     
 sol, ndg, sol_g, ndg_g = nudged_system(5000, 10)
 sol_endpoints, ndg_endpoints, sol_g_endpoints, ndg_g_endpoints = get_endpoints(sol, ndg, sol_g, ndg_g)
 plot_absolute_errors(sol_endpoints, ndg_endpoints, sol_g_endpoints, ndg_g_endpoints)
-
-nudging_df = testing_parameters(nudged_system, mu_list, dt_list, tf_list, step_list)
-
-nudging_df["diff_g"] = abs(nudging_df["sol_g"]-nudging_df["ndg_g"])
-
-nudging_df.to_csv("C:\\Users\\holli\\OneDrive\\Documents\\Graduate School\\Summer 23 Research\\nudging_run_11_19_23.csv", index = False)
-
 plot_absolute_errors_first_three(sol, ndg, sol_g, ndg_g)
 plot_absolute_errors_first_middle(sol, ndg, sol_g, ndg_g)
 plot_absolute_errors_last_three(sol, ndg, sol_g, ndg_g)
