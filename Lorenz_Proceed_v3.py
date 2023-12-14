@@ -15,14 +15,14 @@ Created on Sun Jul 16 19:32:51 2023
 import numpy as np
 import matplotlib.pyplot as plt
 
-sigma = 10.
-beta = 8/3
-rho = 28.
+sigma = 16.
+beta = 4.
+rho = 45.92
 
-mu0 = 1000.
-mu2 = 1000. 
+mu0 = 1800.
+mu2 = 1800. 
 
-dt = .001
+dt = 0.0009
 
 def get_ic(x0, y0, z0, dt): 
      # = 2/mu
@@ -227,15 +227,11 @@ def plot_absolute_errors(sol_endpoints, ndg_endpoints, sol_g_endpoints, ndg_g_en
     plt.plot(t, abs_g, lw=1, label=r'$|g|$')
     
     #plt.plot(self.t, self.delta_S, 'k', lw=1, label=r'$|\tilde{\sigma}-\sigma|$')
-    plt.title('Evolution of absolute errors'); plt.xlabel('t = 20000 td = 10 mu = 1000')
+    plt.title('Evolution of absolute errors'); plt.xlabel('t = 10000 td = 10 mu = 1000 dt = 0.001')
     plt.legend(); plt.grid(); plt.tight_layout(); plt.yscale("log")
     plt.show()
-    
-def make_run_datafrmae(sol_endpoints, ndg_endpoints, sol_g_endpoints, ndg_g_endpoints):
-    
-    
-    
-sol, ndg, sol_g, ndg_g = nudged_system(20000, 10)
+       
+sol, ndg, sol_g, ndg_g = nudged_system(5000, 10)
 sol_endpoints, ndg_endpoints, sol_g_endpoints, ndg_g_endpoints = get_endpoints(sol, ndg, sol_g, ndg_g, 10)
 plot_absolute_errors(sol_endpoints, ndg_endpoints, sol_g_endpoints, ndg_g_endpoints)
   

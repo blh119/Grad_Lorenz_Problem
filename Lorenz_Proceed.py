@@ -9,21 +9,18 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-sigma = 10.
-beta = 8/3
-rho = 28.
+sigma = 16.
+beta = 4.
+rho = 45.92
 
-#mu0 = 500.
-#mu2 = 500.
+mu0_list = [1000., 1500., 1700., 1900.]
+mu2_list = [1000., 1500., 1700., 1900.]
+dt_list = [0.0009]
+tf_list = [5000]
+step_list = [10]
 
-mu_list = [100., 500., 1000., 2000., 3000.]
-dt_list = [.1, .001, .0001, .00001, .000001]
-tf_list = [1000, 2000, 3000, 4000, 5000]
-step_list = [1, 10, 100]
-
-def get_ic(x0, y0, z0): 
+def get_ic(x0, y0, z0, dt): 
     
-    dt = 0.0001 # = 2/mu
     N = int(5/dt)+1
     
     x, y, z = xp, yp, zp = [x0, y0, z0]
@@ -38,9 +35,8 @@ def get_ic(x0, y0, z0):
     return x, y, z
 
 
-def get_ic_list(x0, y0, z0): 
+def get_ic_list(x0, y0, z0, dt): 
     
-    dt = 0.0001 
     N = int(10/dt)+1
     x, y, z = xp, yp, zp = [x0, y0, z0]
 
@@ -62,11 +58,8 @@ def get_ic_list(x0, y0, z0):
     return x_list, y_list, z_list
 
 
-def solve_lorenz_split_1_first(time_step, init_x, init_y, init_z, mu, dt):
+def solve_lorenz_split_1_first(time_step, init_x, init_y, init_z, mu0, mu2, dt):
     
-    mu0 = mu
-    mu2 = mu
-     
     sol = np.empty((time_step, 3))   
     ndg = np.empty((time_step, 3))
     sol_g = np.empty(time_step)
@@ -106,10 +99,7 @@ def solve_lorenz_split_1_first(time_step, init_x, init_y, init_z, mu, dt):
     return [np.array(sol), np.array(ndg), np.array(sol_g), np.array(ndg_g)]
 
 
-def solve_lorenz_split_1(time_step, init_x, init_y, init_z, init_ndg_y, init_sol_g, ndg_list, mu, dt):
-    
-    mu0 = mu
-    mu2 = mu
+def solve_lorenz_split_1(time_step, init_x, init_y, init_z, init_ndg_y, init_sol_g, ndg_list, mu0, mu2, dt):
     
     sol = np.empty((time_step, 3))   
     ndg = np.empty((time_step, 3))
@@ -144,7 +134,7 @@ def solve_lorenz_split_1(time_step, init_x, init_y, init_z, init_ndg_y, init_sol
         
     return [np.array(sol), np.array(ndg), np.array(sol_g), np.array(ndg_g)]
         
-def nudged_system(tf, step, mu, dt):
+def nudged_system(tf, step, mu0, mu2, dt):
     
     time_steps = np.arange(0, tf + 1, step)[::-1]
     time_steps = time_steps[time_steps != 0]
@@ -164,9 +154,9 @@ def nudged_system(tf, step, mu, dt):
         
         if counter == 0:
             
-            init_x, init_y, init_z = get_ic(60., 59.9, 10.)
+            init_x, init_y, init_z = get_ic(60., 59.9, 10., dt)
             
-            current_sol, current_ndg, current_sol_g, current_ndg_g = solve_lorenz_split_1_first(time_step, init_x, init_y, init_z, mu, dt)
+            current_sol, current_ndg, current_sol_g, current_ndg_g = solve_lorenz_split_1_first(time_step, init_x, init_y, init_z, mu0, mu2, dt)
             
             sol_full_set.append(current_sol)
             ndg_full_set.append(current_ndg)
@@ -191,7 +181,7 @@ def nudged_system(tf, step, mu, dt):
             init_sol_g = -sol_full_set[counter-1][step-1, 0]*sol_full_set[counter-1][step-1, 2]
             ndg_list = ndg_full_set[counter-1][step-1:]
             
-            current_sol, current_ndg, current_sol_g, current_ndg_g = solve_lorenz_split_1(time_step, init_x, init_y, init_z, init_ndg_y, init_sol_g, ndg_list, mu, dt)
+            current_sol, current_ndg, current_sol_g, current_ndg_g = solve_lorenz_split_1(time_step, init_x, init_y, init_z, init_ndg_y, init_sol_g, ndg_list, mu0, mu2, dt)
             
             sol_full_set.append(current_sol)
             ndg_full_set.append(current_ndg)
@@ -243,168 +233,7 @@ def plot_absolute_errors(sol_endpoints, ndg_endpoints, sol_g_endpoints, ndg_g_en
     plt.legend(); plt.grid(); plt.tight_layout(); plt.yscale("log")
     plt.show()
     
-
-def plot_absolute_errors_first_three(sol_full_set, ndg_full_set, sol_g_full_set, ndg_g_full_set):
-    
-    fig, axes = plt.subplots(1, 3, figsize=(15, 5))
-    
-    # values for first plot
-    t0 = np.arange(0, len(sol_full_set[0]))
-    
-    abs_u_0 = abs(sol_full_set[0][:,0] - ndg_full_set[0][:,0])
-    abs_v_0 = abs(sol_full_set[0][:,1] - ndg_full_set[0][:,1])
-    abs_w_0 = abs(sol_full_set[0][:,2] - ndg_full_set[0][:,2])
-    abs_g_0 = abs(sol_g_full_set[0] - ndg_g_full_set[0])
-    
-    # values for second plot
-    t1 = np.arange(0, len(sol_full_set[1]))
-    
-    abs_u_1 = abs(sol_full_set[1][:,0] - ndg_full_set[1][:,0])
-    abs_v_1 = abs(sol_full_set[1][:,1] - ndg_full_set[1][:,1])
-    abs_w_1 = abs(sol_full_set[1][:,2] - ndg_full_set[1][:,2])
-    abs_g_1 = abs(sol_g_full_set[1] - ndg_g_full_set[1])
-    
-    # values for third plot
-    t2 = np.arange(0, len(sol_full_set[2]))
-    
-    abs_u_2 = abs(sol_full_set[2][:,0] - ndg_full_set[2][:,0])
-    abs_v_2 = abs(sol_full_set[2][:,1] - ndg_full_set[2][:,1])
-    abs_w_2 = abs(sol_full_set[2][:,2] - ndg_full_set[2][:,2])
-    abs_g_2 = abs(sol_g_full_set[2] - ndg_g_full_set[2])
-    
-    axes[0].plot(t0, abs_u_0, lw=1, label=r'$|u|$') 
-    axes[0].plot(t0, abs_v_0, lw=1, label=r'$|v|$')
-    axes[0].plot(t0, abs_w_0, lw=1, label=r'$|w|$')
-    axes[0].plot(t0, abs_g_0, lw=1, label=r'$|g|$')
-    axes[0].set_title("Evolution of absolute errors t0")
-    axes[0].legend()
-    
-    axes[1].plot(t1, abs_u_1, lw=1, label=r'$|u|$') 
-    axes[1].plot(t1, abs_v_1, lw=1, label=r'$|v|$')
-    axes[1].plot(t1, abs_w_1, lw=1, label=r'$|w|$')
-    axes[1].plot(t1, abs_g_1, lw=1, label=r'$|g|$')
-    axes[1].set_title("Evolution of absolute errors t1")
-    axes[1].legend()
-    
-    axes[2].plot(t2, abs_u_2, lw=1, label=r'$|u|$') 
-    axes[2].plot(t2, abs_v_2, lw=1, label=r'$|v|$')
-    axes[2].plot(t2, abs_w_2, lw=1, label=r'$|w|$')
-    axes[2].plot(t2, abs_g_2, lw=1, label=r'$|g|$')
-    axes[2].set_title("Evolution of absolute errors t2")
-    axes[2].legend()
-    
-    plt.tight_layout()
-    plt.show()
-    
-    
-def plot_absolute_errors_first_middle(sol_full_set, ndg_full_set, sol_g_full_set, ndg_g_full_set):
-    
-    fig, axes = plt.subplots(1, 3, figsize=(15, 5))
-    
-    middle_set = int((len(sol_full_set)/2)-1)
-    
-    # values for first plot
-    t0 = np.arange(0, len(sol_full_set[middle_set-1]))
-    
-    abs_u_0 = abs(sol_full_set[middle_set-1][:,0] - ndg_full_set[middle_set-1][:,0])
-    abs_v_0 = abs(sol_full_set[middle_set-1][:,1] - ndg_full_set[middle_set-1][:,1])
-    abs_w_0 = abs(sol_full_set[middle_set-1][:,2] - ndg_full_set[middle_set-1][:,2])
-    abs_g_0 = abs(sol_g_full_set[middle_set-1] - ndg_g_full_set[middle_set-1])
-    
-    # values for second plot
-    t1 = np.arange(0, len(sol_full_set[middle_set]))
-    
-    abs_u_1 = abs(sol_full_set[middle_set][:,0] - ndg_full_set[middle_set][:,0])
-    abs_v_1 = abs(sol_full_set[middle_set][:,1] - ndg_full_set[middle_set][:,1])
-    abs_w_1 = abs(sol_full_set[middle_set][:,2] - ndg_full_set[middle_set][:,2])
-    abs_g_1 = abs(sol_g_full_set[middle_set] - ndg_g_full_set[middle_set])
-    
-    # values for third plot
-    t2 = np.arange(0, len(sol_full_set[middle_set+1]))
-    
-    abs_u_2 = abs(sol_full_set[middle_set+1][:,0] - ndg_full_set[middle_set+1][:,0])
-    abs_v_2 = abs(sol_full_set[middle_set+1][:,1] - ndg_full_set[middle_set+1][:,1])
-    abs_w_2 = abs(sol_full_set[middle_set+1][:,2] - ndg_full_set[middle_set+1][:,2])
-    abs_g_2 = abs(sol_g_full_set[middle_set+1] - ndg_g_full_set[middle_set+1])
-    
-    axes[0].plot(t0, abs_u_0, lw=1, label=r'$|u|$') 
-    axes[0].plot(t0, abs_v_0, lw=1, label=r'$|v|$')
-    axes[0].plot(t0, abs_w_0, lw=1, label=r'$|w|$')
-    axes[0].plot(t0, abs_g_0, lw=1, label=r'$|g|$')
-    axes[0].set_title("Evolution of absolute errors t middle-1")
-    axes[0].legend()
-    
-    axes[1].plot(t1, abs_u_1, lw=1, label=r'$|u|$') 
-    axes[1].plot(t1, abs_v_1, lw=1, label=r'$|v|$')
-    axes[1].plot(t1, abs_w_1, lw=1, label=r'$|w|$')
-    axes[1].plot(t1, abs_g_1, lw=1, label=r'$|g|$')
-    axes[1].set_title("Evolution of absolute errors t middle")
-    axes[1].legend()
-    
-    axes[2].plot(t2, abs_u_2, lw=1, label=r'$|u|$') 
-    axes[2].plot(t2, abs_v_2, lw=1, label=r'$|v|$')
-    axes[2].plot(t2, abs_w_2, lw=1, label=r'$|w|$')
-    axes[2].plot(t2, abs_g_2, lw=1, label=r'$|g|$')
-    axes[2].set_title("Evolution of absolute errors t middle + 1")
-    axes[2].legend()
-    
-    plt.tight_layout()
-    plt.show()
-    
-
-def plot_absolute_errors_last_three(sol_full_set, ndg_full_set, sol_g_full_set, ndg_g_full_set):
-    
-    fig, axes = plt.subplots(1, 3, figsize=(15, 5))
-    
-    # values for first plot
-    t0 = np.arange(0, len(sol_full_set[-3]))
-    
-    abs_u_0 = abs(sol_full_set[-3][:,0] - ndg_full_set[-3][:,0])
-    abs_v_0 = abs(sol_full_set[-3][:,1] - ndg_full_set[-3][:,1])
-    abs_w_0 = abs(sol_full_set[-3][:,2] - ndg_full_set[-3][:,2])
-    abs_g_0 = abs(sol_g_full_set[-3] - ndg_g_full_set[-3])
-    
-    # values for second plot
-    t1 = np.arange(0, len(sol_full_set[-2]))
-    
-    abs_u_1 = abs(sol_full_set[-2][:,0] - ndg_full_set[-2][:,0])
-    abs_v_1 = abs(sol_full_set[-2][:,1] - ndg_full_set[-2][:,1])
-    abs_w_1 = abs(sol_full_set[-2][:,2] - ndg_full_set[-2][:,2])
-    abs_g_1 = abs(sol_g_full_set[-2] - ndg_g_full_set[-2])
-    
-    # values for third plot
-    t2 = np.arange(0, len(sol_full_set[-1]))
-    
-    abs_u_2 = abs(sol_full_set[-1][:,0] - ndg_full_set[-1][:,0])
-    abs_v_2 = abs(sol_full_set[-1][:,1] - ndg_full_set[-1][:,1])
-    abs_w_2 = abs(sol_full_set[-1][:,2] - ndg_full_set[-1][:,2])
-    abs_g_2 = abs(sol_g_full_set[-1] - ndg_g_full_set[-1])
-    
-    axes[0].plot(t0, abs_u_0, lw=1, label=r'$|u|$') 
-    axes[0].plot(t0, abs_v_0, lw=1, label=r'$|v|$')
-    axes[0].plot(t0, abs_w_0, lw=1, label=r'$|w|$')
-    axes[0].plot(t0, abs_g_0, lw=1, label=r'$|g|$')
-    axes[0].set_title("Evolution of absolute errors t-3")
-    axes[0].legend()
-    
-    axes[1].plot(t1, abs_u_1, lw=1, label=r'$|u|$') 
-    axes[1].plot(t1, abs_v_1, lw=1, label=r'$|v|$')
-    axes[1].plot(t1, abs_w_1, lw=1, label=r'$|w|$')
-    axes[1].plot(t1, abs_g_1, lw=1, label=r'$|g|$')
-    axes[1].set_title("Evolution of absolute errors t-2")
-    axes[1].legend()
-    
-    axes[2].plot(t2, abs_u_2, lw=1, label=r'$|u|$') 
-    axes[2].plot(t2, abs_v_2, lw=1, label=r'$|v|$')
-    axes[2].plot(t2, abs_w_2, lw=1, label=r'$|w|$')
-    axes[2].plot(t2, abs_g_2, lw=1, label=r'$|g|$')
-    axes[2].set_title("Evolution of absolute errors t-1")
-    axes[2].legend()
-    
-    plt.tight_layout()
-    plt.show()
-    
-def create_testing_parameters_dataframe(sol, ndg, sol_g, ndg_g, mu, dt, tf, step):
+def create_testing_parameters_dataframe(sol, ndg, sol_g, ndg_g, mu0, mu2, dt, tf, step):
     
     current_run_data = {"sol_x": sol[:,0],
                         "sol_y": sol[:,1],
@@ -416,57 +245,43 @@ def create_testing_parameters_dataframe(sol, ndg, sol_g, ndg_g, mu, dt, tf, step
                         "ndg_g": ndg_g,
                         "diff_g": abs(sol_g-ndg_g),
                         "u": abs(sol[:,0]-ndg[:,0]),
-                        "w": abs(sol[:,1]-ndg[:,1]),
-                        "z": abs(sol[:,2]-ndg[:,2])}
+                        "v": abs(sol[:,1]-ndg[:,1]),
+                        "w": abs(sol[:,2]-ndg[:,2])}
     
     current_run_dataframe = pd.DataFrame(current_run_data)
     
-    current_run_dataframe["mu"] = mu
+    current_run_dataframe["mu0"] = mu0
+    current_run_dataframe["mu2"] = mu2
     current_run_dataframe["dt"] = dt
     current_run_dataframe["tf"] = tf
     current_run_dataframe["step"] = step
     
     return current_run_dataframe
     
-def testing_parameters(nudging_function, mu_list, dt_list, tf_list, step_list):
+def testing_parameters(nudging_function, mu0_list, mu2_list, dt_list, tf_list, step_list):
     
     nudging_df = pd.DataFrame()
     
     for tf in tf_list:
-        for mu in mu_list:
-            for step in step_list:
-                for dt in dt_list: 
-                    
-                    current_sol, current_ndg, current_sol_g, current_ndg_g = nudging_function(tf, step, mu, dt) 
-                    sol_endpoints, ndg_endpoints, sol_g_endpoints, ndg_g_endpoints = get_endpoints(current_sol, current_ndg, current_sol_g, current_ndg_g, step)
-                    current_nudging_df = create_testing_parameters_dataframe(sol_endpoints, ndg_endpoints, sol_g_endpoints, ndg_g_endpoints, mu, dt, tf, step)
-                    nudging_df = pd.concat([current_nudging_df, nudging_df], axis = 0)
+        for mu0 in mu0_list:
+            for mu2 in mu2_list:
+                for step in step_list:
+                    for dt in dt_list: 
+                        current_sol, current_ndg, current_sol_g, current_ndg_g = nudging_function(tf, step, mu0, mu2, dt) 
+                        sol_endpoints, ndg_endpoints, sol_g_endpoints, ndg_g_endpoints = get_endpoints(current_sol, current_ndg, current_sol_g, current_ndg_g, step)
+                        current_nudging_df = create_testing_parameters_dataframe(sol_endpoints, ndg_endpoints, sol_g_endpoints, ndg_g_endpoints, mu0, mu2, dt, tf, step)
+                        nudging_df = pd.concat([current_nudging_df, nudging_df], axis = 0)
                     
     return nudging_df
     
-sol, ndg, sol_g, ndg_g = nudged_system(5000, 10)
-sol_endpoints, ndg_endpoints, sol_g_endpoints, ndg_g_endpoints = get_endpoints(sol, ndg, sol_g, ndg_g)
-plot_absolute_errors(sol_endpoints, ndg_endpoints, sol_g_endpoints, ndg_g_endpoints)
-
-nudging_df = testing_parameters(nudged_system, mu_list, dt_list, tf_list, step_list)
+nudging_df = testing_parameters(nudged_system, mu0_list, mu2_list, dt_list, tf_list, step_list)
 
 nudging_df["diff_g"] = abs(nudging_df["sol_g"]-nudging_df["ndg_g"])
+nudging_df["sigma"] = sigma
+nudging_df["beta"] = beta
+nudging_df["rho"] = rho
 
-nudging_df.to_csv("C:\\Users\\holli\\OneDrive\\Documents\\Graduate School\\Summer 23 Research\\nudging_run_11_19_23.csv", index = False)
-
-plot_absolute_errors_first_three(sol, ndg, sol_g, ndg_g)
-plot_absolute_errors_first_middle(sol, ndg, sol_g, ndg_g)
-plot_absolute_errors_last_three(sol, ndg, sol_g, ndg_g)
-
-
+nudging_df.to_csv("C:\\Users\\holli\\OneDrive\\Documents\\Graduate School\\Summer 23 Research\\nudging_run_12_13_23.csv", index = False)
         
-t = np.arange(0, len(ndg_g_endpoints))
 
-plt.plot(t, sol_g_endpoints, lw=1, label=r'$|s_g|$')
-plt.plot(t, ndg_g_endpoints, lw=1, label=r'$|n_g|$')
-plt.title('Evolution of absolute errors'); plt.xlabel('t = 1000 td = 1 mu = 1000')
-plt.show()
-
-
-plt
 
